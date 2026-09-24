@@ -1,0 +1,220 @@
+USE GRAPH HHGOA_FRAUD
+
+CREATE QUERY customer_transactions(
+    VERTEX<Customer> customer,
+    DATETIME start_ts,
+    DATETIME end_ts,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+    Result =
+        SELECT t
+        FROM Transaction:t
+        WHERE t.customer_id == customer.customer_id
+          AND t.ts >= start_ts
+          AND t.ts <= end_ts
+        ORDER BY t.ts ASC
+        LIMIT max_results;
+
+    PRINT Result;
+}
+
+
+CREATE QUERY device_neighbors(
+    VERTEX<DeviceProfile> device,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+    Result =
+        SELECT t
+        FROM DeviceProfile:d -(<FROM_DEVICE)- Transaction:t
+        LIMIT max_results;
+
+    PRINT Result;
+}
+
+
+CREATE QUERY shared_device_transactions(
+    VERTEX<DeviceProfile> device,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+    Result =
+        SELECT t
+        FROM DeviceProfile:d -(<FROM_DEVICE)- Transaction:t
+        LIMIT max_results;
+
+    PRINT Result;
+}
+
+
+CREATE QUERY prior_case_neighbors(
+    VERTEX<Card> card,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+    Result =
+        SELECT c
+        FROM Card:card_v -(<ON_CARD)- ClosedCase:c
+        WHERE card_v == card
+        LIMIT max_results;
+
+    PRINT Result;
+}
+
+
+CREATE QUERY card_connected_cases(
+    VERTEX<Card> card,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+    Result =
+        SELECT c
+        FROM Card:card_v -(<CONNECTED_TO)- ClosedCase:c
+        WHERE card_v == card
+        LIMIT max_results;
+
+    PRINT Result;
+}
+
+
+CREATE QUERY case_context(
+    VERTEX<InvestigationCase> investigation_case,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+
+    Transactions =
+        SELECT t
+        FROM InvestigationCase:c -(INVOLVES>)- Transaction:t
+        WHERE c == investigation_case
+        LIMIT max_results;
+
+    Cards =
+        SELECT card
+        FROM InvestigationCase:c -(ON_CARD>)- Card:card
+        WHERE c == investigation_case
+        LIMIT max_results;
+
+    ConnectedCards =
+        SELECT card
+        FROM InvestigationCase:c -(CONNECTED_TO>)- Card:card
+        WHERE c == investigation_case
+        LIMIT max_results;
+
+    Devices =
+        SELECT d
+        FROM InvestigationCase:c -(RELATED_DEVICE>)- DeviceProfile:d
+        WHERE c == investigation_case
+        LIMIT max_results;
+
+    SimilarCases =
+        SELECT cc
+        FROM InvestigationCase:c -(SIMILAR_TO>)- ClosedCase:cc
+        WHERE c == investigation_case
+        LIMIT max_results;
+
+    PRINT Transactions;
+    PRINT Cards;
+    PRINT ConnectedCards;
+    PRINT Devices;
+    PRINT SimilarCases;
+}
+
+
+CREATE QUERY transaction_sequence(
+    VERTEX<Transaction> transaction,
+    INT max_results=20
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+    Result =
+        SELECT t
+        FROM Transaction:current -(NEXT>)- Transaction:t
+        WHERE current == transaction
+        ORDER BY t.ts ASC
+        LIMIT max_results;
+
+    PRINT Result;
+}
+
+
+CREATE QUERY region_transactions(
+    VERTEX<BillingRegion> region,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+    Result =
+        SELECT t
+        FROM BillingRegion:r -(<BILLED_IN)- Transaction:t
+        WHERE r == region
+        ORDER BY t.ts ASC
+        LIMIT max_results;
+
+    PRINT Result;
+}
+
+
+CREATE QUERY email_transactions(
+    VERTEX<EmailDomain> email,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+    Result =
+        SELECT t
+        FROM EmailDomain:e -(<PURCHASER_EMAIL)- Transaction:t
+        WHERE e == email
+        ORDER BY t.ts ASC
+        LIMIT max_results;
+
+    PRINT Result;
+}
+
+
+CREATE QUERY transaction_context(
+    VERTEX<Transaction> transaction,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+
+    Devices =
+        SELECT d
+        FROM Transaction:t -(FROM_DEVICE>)- DeviceProfile:d
+        WHERE t == transaction
+        LIMIT max_results;
+
+    Emails =
+        SELECT e
+        FROM Transaction:t -(PURCHASER_EMAIL>)- EmailDomain:e
+        WHERE t == transaction
+        LIMIT max_results;
+
+    Regions =
+        SELECT r
+        FROM Transaction:t -(BILLED_IN>)- BillingRegion:r
+        WHERE t == transaction
+        LIMIT max_results;
+
+    NextTransactions =
+        SELECT n
+        FROM Transaction:t -(NEXT>)- Transaction:n
+        WHERE t == transaction
+        ORDER BY n.ts ASC
+        LIMIT max_results;
+
+    PRINT Devices;
+    PRINT Emails;
+    PRINT Regions;
+    PRINT NextTransactions;
+}
+
+
+CREATE QUERY connected_cards_from_case(
+    VERTEX<ClosedCase> closed_case,
+    INT max_results=100
+) FOR GRAPH HHGOA_FRAUD SYNTAX v2 {
+
+    ConnectedCards =
+        SELECT card
+        FROM ClosedCase:c -(CONNECTED_TO>)- Card:card
+        WHERE c == closed_case
+        LIMIT max_results;
+
+    CaseCards =
+        SELECT card
+        FROM ClosedCase:c -(ON_CARD>)- Card:card
+        WHERE c == closed_case
+        LIMIT max_results;
+
+    PRINT ConnectedCards;
+    PRINT CaseCards;
+}

@@ -1,0 +1,20 @@
+USE GRAPH FraudInvestigationGraph
+CREATE LOADING JOB load_fraud_data FOR GRAPH FraudInvestigationGraph {
+  DEFINE FILENAME transactions = "$transactions";
+  DEFINE FILENAME identity_profiles = "$identity_profiles";
+  DEFINE FILENAME closed_cases = "$closed_cases";
+  DEFINE FILENAME case_pack = "$case_pack";
+  LOAD transactions TO VERTEX Transaction VALUES($"TransactionID", $"customer_id", $"ts", $"TransactionAmt", $"channel", $"ProductCD", $"addr1", $"P_emaildomain") USING header="true", separator=",";
+  LOAD transactions TO VERTEX Customer VALUES($"customer_id") USING header="true", separator=",";
+  LOAD transactions TO VERTEX BillingRegion VALUES($"addr1") USING header="true", separator=",";
+  LOAD transactions TO EDGE BILLED_IN VALUES($"TransactionID", $"addr1") USING header="true", separator=",";
+  LOAD transactions TO VERTEX EmailDomain VALUES($"P_emaildomain") USING header="true", separator=",";
+  LOAD transactions TO EDGE PURCHASER_EMAIL VALUES($"TransactionID", $"P_emaildomain") USING header="true", separator=",";
+  LOAD identity_profiles TO VERTEX DeviceProfile VALUES($"device_profile_id", $"DeviceInfo", $"id_30", $"id_31", $"id_33", $"DeviceType") USING header="true", separator=",";
+  LOAD identity_profiles TO EDGE FROM_DEVICE VALUES($"TransactionID", $"device_profile_id") USING header="true", separator=",";
+  LOAD closed_cases TO VERTEX ClosedCase VALUES($"case_id", $"customer_id", $"card_id", $"outcome", $"pattern", $"exposure_usd", $"actions_taken", $"report_filed", $"analyst_notes") USING header="true", separator=",";
+  LOAD closed_cases TO VERTEX Card VALUES($"card_id", $"customer_id") USING header="true", separator=",";
+  LOAD closed_cases TO EDGE OWNS VALUES($"customer_id", $"card_id") USING header="true", separator=",";
+  LOAD closed_cases TO EDGE ON_CARD VALUES($"case_id", $"card_id") USING header="true", separator=",";
+  LOAD case_pack TO VERTEX Customer VALUES($"customer_id") USING header="true", separator=",";
+}

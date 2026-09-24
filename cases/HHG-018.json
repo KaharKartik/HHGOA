@@ -1,0 +1,156 @@
+{
+  "case_id": "HHG-018",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "card_not_present_fraud",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3491361"
+    ],
+    "first_suspicious_txn_id": "3491361",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 39.08,
+    "evidence": [
+      {
+        "claim": "Transaction 3491361 context verified in graph (amount: $39.08) in region 126.0",
+        "source": "graph",
+        "ref": "transaction_context",
+        "entity_ids": [
+          "3491361"
+        ]
+      },
+      {
+        "claim": "Customer C02354 transaction history retrieved (1 events).",
+        "source": "graph",
+        "ref": "customer_transactions",
+        "entity_ids": [
+          "C02354"
+        ]
+      },
+      {
+        "claim": "Historical closed cases retrieved for card C02354-K2: ['CC-0255', 'CC-0405', 'CC-0454', 'CC-0631', 'CC-1450', 'CC-1699', 'CC-2051', 'CC-2187', 'CC-2432', 'CC-2589', 'CC-3085', 'CC-3537', 'CC-3634', 'CC-3899', 'CC-4070', 'CC-4436', 'CC-4721', 'CC-4942', 'CC-5441', 'CC-5558'].",
+        "source": "graph",
+        "ref": "prior_case_neighbors",
+        "entity_ids": [
+          "C02354-K2",
+          "CC-0255",
+          "CC-0405",
+          "CC-0454",
+          "CC-0631",
+          "CC-1450",
+          "CC-1699",
+          "CC-2051",
+          "CC-2187",
+          "CC-2432",
+          "CC-2589",
+          "CC-3085",
+          "CC-3537",
+          "CC-3634",
+          "CC-3899",
+          "CC-4070",
+          "CC-4436",
+          "CC-4721",
+          "CC-4942",
+          "CC-5441",
+          "CC-5558"
+        ]
+      },
+      {
+        "claim": "Matched policy R10. Never BLOCK_ALL_CARDS unless qualified: Never BLOCK_ALL_CARDS unless at least two of the customer's cards show confirmed fraud or the customer's credentials are...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-018"
+        ]
+      },
+      {
+        "claim": "Matched policy R5. Card testing: Three or more small online authorizations on one card within an hour, followed by a larger purchase: recommend DECLINE_T...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-018"
+        ]
+      },
+      {
+        "claim": "Matched policy Pattern 1: Card testing: A stolen card number is checked before use: three or more tiny online authorizations, often under $5, then a larger purc...",
+        "source": "document",
+        "ref": "data/raw/README.md#Known Fraud Patterns",
+        "entity_ids": [
+          "HHG-018"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-0255",
+      "CC-0405",
+      "CC-0454",
+      "CC-0631",
+      "CC-1450",
+      "CC-1699",
+      "CC-2051",
+      "CC-2187",
+      "CC-2432",
+      "CC-2589",
+      "CC-3085",
+      "CC-3537",
+      "CC-3634",
+      "CC-3899",
+      "CC-4070",
+      "CC-4436",
+      "CC-4721",
+      "CC-4942",
+      "CC-5441",
+      "CC-5558"
+    ],
+    "summary": "Case HHG-018 concluded with verdict fraud (p=0.90) under pattern 'card_not_present_fraud'. Exposure calculated at $39.08.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": false
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": true
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": false
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": true
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "No report trigger under R2/R6/R9",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "calibrated probability is supported by at least two independent evidence items",
+  "tool_calls": 4,
+  "tokens": 0,
+  "latency_s": 1.725
+}

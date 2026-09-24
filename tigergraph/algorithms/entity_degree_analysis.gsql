@@ -1,0 +1,69 @@
+USE GRAPH HHGOA_FRAUD
+
+/*
+  entity_degree_analysis
+  ──────────────────────
+  Ranks shared-origin entities (DeviceProfile, BillingRegion, EmailDomain) by
+  the number of distinct Card vertices that route transactions through them.
+  A high degree signals a potential fraud ring or compromise cluster.
+
+  Returns: top_devices, top_regions, top_emails — each sorted descending by card_count.
+  Parameter: top_k — how many top entities to return per category (default 20).
+*/
+CREATE OR REPLACE QUERY entity_degree_analysis(INT top_k = 20)
+  FOR GRAPH HHGOA_FRAUD
+  SYNTAX V2
+{
+  /* ── accumulators ─────────────────────────────────────────────────── */
+  MapAccum<VERTEX<DeviceProfile>, SetAccum<VERTEX<Card>>> @@device_cards;
+  MapAccum<VERTEX<BillingRegion>, SetAccum<VERTEX<Card>>> @@region_cards;
+  MapAccum<VERTEX<EmailDomain>,   SetAccum<VERTEX<Card>>> @@email_cards;
+
+  HeapAccum<TUPLE<INT card_count, STRING entity_id>>(top_k, card_count DESC) @@top_devices;
+  HeapAccum<TUPLE<INT card_count, STRING entity_id>>(top_k, card_count DESC) @@top_regions;
+  HeapAccum<TUPLE<INT card_count, STRING entity_id>>(top_k, card_count DESC) @@top_emails;
+
+  /* ── step 1: walk Card → Transaction → {Device,Region,Email} ─────── */
+  AllCards = {Card.*};
+
+  Transactions = SELECT t
+    FROM AllCards:c -(MADE)-> Transaction:t;
+
+  /* device dimension */
+  SELECT dev
+    FROM Transactions:t -(FROM_DEVICE)-> DeviceProfile:dev
+    ACCUM @@device_cards += (dev -> t.getAttr("card_id", "STRING"));
+    /* Note: card_id stored on Transaction; approximate via transaction vertex set */
+
+  /* Recompute using Card→Transaction→Device path to count distinct cards */
+  CardTxnDev = SELECT dev
+    FROM AllCards:c -(MADE)-> Transaction:t -(FROM_DEVICE)-> DeviceProfile:dev
+    ACCUM @@device_cards += (dev -> c);
+
+  CardTxnReg = SELECT reg
+    FROM AllCards:c -(MADE)-> Transaction:t -(BILLED_IN)-> BillingRegion:reg
+    ACCUM @@region_cards += (reg -> c);
+
+  CardTxnEmail = SELECT em
+    FROM AllCards:c -(MADE)-> Transaction:t -(PURCHASER_EMAIL)-> EmailDomain:em
+    ACCUM @@email_cards += (em -> c);
+
+  /* ── step 2: build ranked heaps ──────────────────────────────────── */
+  FOREACH (dev, cards) IN @@device_cards DO
+    @@top_devices += TUPLE<INT, STRING>(cards.size(), dev.device_profile_id);
+  END;
+
+  FOREACH (reg, cards) IN @@region_cards DO
+    @@top_regions += TUPLE<INT, STRING>(cards.size(), reg.billing_region);
+  END;
+
+  FOREACH (em, cards) IN @@email_cards DO
+    @@top_emails += TUPLE<INT, STRING>(cards.size(), em.email_domain);
+  END;
+
+  PRINT @@top_devices AS top_devices,
+        @@top_regions AS top_regions,
+        @@top_emails  AS top_emails;
+}
+
+INSTALL QUERY entity_degree_analysis

@@ -45,7 +45,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# Testing & Typing Caches
+# Testing & Temporary Caches
 .pytest_cache/
 .coverage
 htmlcov/
@@ -54,6 +54,13 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 .hypothesis/
+pytest-temp/
+pytest_temp/
+pytest_basetemp/
+tmp_basetemp_dir/
+scratch/
+card_dump.txt
+outputs/
 
 # ==========================================
 # Node / Frontend
@@ -88,19 +95,19 @@ logs/
 *.db
 
 # ==========================================
-# Data & Generated Files
+# Data & Large Datasets
 # ==========================================
-data/raw/*
+# Ignore large dataset files (>25MB)
+data/raw/transactions.csv
+data/raw/identity.csv
 data/processed/*
 data/interim/*
 data/outputs/*
-data/*.csv
-data/*.parquet
-data/*.json
-data/*.jsonl
-!data/.gitkeep
-!data/raw/.gitkeep
-!data/processed/.gitkeep
+
+# Keep benchmark data files required for execution
+!data/raw/case_pack.csv
+!data/raw/closed_cases_history.csv
+!data/raw/README.md
 
 # Graph / TigerGraph exports or checkpoints
 *.gsql.bak
@@ -123,6 +130,9 @@ tigergraph/data/
 Thumbs.db
 .vscode/
 .idea/
+.agents/
+.ipynb_checkpoints/
+Untitled.ipynb
 *.swp
 *.swo
 *~

@@ -1,0 +1,154 @@
+{
+  "case_id": "HHG-007",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "out_of_region_use",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3514948"
+    ],
+    "first_suspicious_txn_id": "3514948",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 111.92,
+    "evidence": [
+      {
+        "claim": "Transaction 3514948 context verified in graph (amount: $111.92) in region 264.0",
+        "source": "graph",
+        "ref": "transaction_context",
+        "entity_ids": [
+          "3514948"
+        ]
+      },
+      {
+        "claim": "Customer C09933 transaction history retrieved (1 events).",
+        "source": "graph",
+        "ref": "customer_transactions",
+        "entity_ids": [
+          "C09933"
+        ]
+      },
+      {
+        "claim": "Historical closed cases retrieved for card C09933-K2: ['CC-0104', 'CC-0657', 'CC-0765', 'CC-1228', 'CC-1524', 'CC-1682', 'CC-2565', 'CC-2834', 'CC-2986', 'CC-3136', 'CC-3439', 'CC-3821', 'CC-4196', 'CC-4277', 'CC-4455', 'CC-4597', 'CC-4787', 'CC-5092', 'CC-5521'].",
+        "source": "graph",
+        "ref": "prior_case_neighbors",
+        "entity_ids": [
+          "C09933-K2",
+          "CC-0104",
+          "CC-0657",
+          "CC-0765",
+          "CC-1228",
+          "CC-1524",
+          "CC-1682",
+          "CC-2565",
+          "CC-2834",
+          "CC-2986",
+          "CC-3136",
+          "CC-3439",
+          "CC-3821",
+          "CC-4196",
+          "CC-4277",
+          "CC-4455",
+          "CC-4597",
+          "CC-4787",
+          "CC-5092",
+          "CC-5521"
+        ]
+      },
+      {
+        "claim": "Matched policy R1. Verify before you block on a weak signal: If the case rests on a single signal (including a risk score alone) and your assessed fraud probability is below 0.70, r...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-007"
+        ]
+      },
+      {
+        "claim": "Matched policy Pattern 4: Out-of-region use: Card-present purchases in a billing region the cardholder has no history in, while their normal activity continues at ho...",
+        "source": "document",
+        "ref": "data/raw/README.md#Known Fraud Patterns",
+        "entity_ids": [
+          "HHG-007"
+        ]
+      },
+      {
+        "claim": "Matched policy R6. Shared origin: When several cards show fraud from the same device profile, the same billing region, or the same recipient email in one ...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-007"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-0104",
+      "CC-0657",
+      "CC-0765",
+      "CC-1228",
+      "CC-1524",
+      "CC-1682",
+      "CC-2565",
+      "CC-2834",
+      "CC-2986",
+      "CC-3136",
+      "CC-3439",
+      "CC-3821",
+      "CC-4196",
+      "CC-4277",
+      "CC-4455",
+      "CC-4597",
+      "CC-4787",
+      "CC-5092",
+      "CC-5521"
+    ],
+    "summary": "Case HHG-007 concluded with verdict fraud (p=0.90) under pattern 'out_of_region_use'. Exposure calculated at $111.92.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 5,
+      "assumed_response": "Customer denies authorization of flagged charge upon inquiry."
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: verify before any block on a weak signal",
+        "executable_by_agent": true
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": false
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": true
+      }
+    ],
+    "what_changed": "Actions updated after simulated denies."
+  },
+  "sar": {
+    "file": false,
+    "reason": "No report trigger under R2/R6/R9",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "Customer denial settled authorization legitimacy.",
+  "tool_calls": 4,
+  "tokens": 0,
+  "latency_s": 2.036
+}

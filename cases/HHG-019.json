@@ -1,0 +1,139 @@
+{
+  "case_id": "HHG-019",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "card_not_present_fraud",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3503878"
+    ],
+    "first_suspicious_txn_id": "3503878",
+    "connected_card_ids": [],
+    "connected_device_profiles": [
+      "DP-803df46a19c185724fdb31d9"
+    ],
+    "exposure_usd": 99.92,
+    "evidence": [
+      {
+        "claim": "Transaction 3503878 context verified in graph (amount: $99.92) in region 264.0",
+        "source": "graph",
+        "ref": "transaction_context",
+        "entity_ids": [
+          "3503878"
+        ]
+      },
+      {
+        "claim": "Customer C07987 transaction history retrieved (1 events).",
+        "source": "graph",
+        "ref": "customer_transactions",
+        "entity_ids": [
+          "C07987"
+        ]
+      },
+      {
+        "claim": "Historical closed cases retrieved for card C07987-K2: ['CC-2011', 'CC-2087', 'CC-2860', 'CC-5026'].",
+        "source": "graph",
+        "ref": "prior_case_neighbors",
+        "entity_ids": [
+          "C07987-K2",
+          "CC-2011",
+          "CC-2087",
+          "CC-2860",
+          "CC-5026"
+        ]
+      },
+      {
+        "claim": "Matched policy R1. Verify before you block on a weak signal: If the case rests on a single signal (including a risk score alone) and your assessed fraud probability is below 0.70, r...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-019"
+        ]
+      },
+      {
+        "claim": "Matched policy R6. Shared origin: When several cards show fraud from the same device profile, the same billing region, or the same recipient email in one ...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-019"
+        ]
+      },
+      {
+        "claim": "Matched policy SAR Filing Guidance and Criteria: A suspicious activity report (FILE_REPORT) is a regulatory filing sent outside the bank. File one when fraud is confirme...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / 3a. A case is not a report",
+        "entity_ids": [
+          "HHG-019"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-2011",
+      "CC-2087",
+      "CC-2860",
+      "CC-5026"
+    ],
+    "summary": "Case HHG-019 concluded with verdict fraud (p=0.90) under pattern 'card_not_present_fraud'. Exposure calculated at $99.92.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 5,
+      "assumed_response": "Customer denies authorization of flagged charge upon inquiry."
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: verify before any block on a weak signal",
+        "executable_by_agent": true
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": false
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": true
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": false
+      }
+    ],
+    "what_changed": "Actions updated after simulated denies."
+  },
+  "sar": {
+    "file": true,
+    "reason": "SAR threshold met under R2/R6/R9",
+    "narrative": "Between 2016-12-01 and 2016-12-01, customer C07987 on card C07987-K2 exhibited suspicious activity under pattern 'card_not_present_fraud' involving total exposure of $99.92. The transaction series was identified through automated risk monitoring and cross-entity graph analysis. Associated device identifiers include ['DP-803df46a19c185724fdb31d9']. The customer was consulted under policy guidelines, confirming unauthorized card-not-present exploitation. Pursuant to BSA/AML reporting requirements under policies R2/R6/R9, this report is filed for immediate regulatory review.",
+    "subjects": [
+      "C07987",
+      "C07987-K2",
+      "DP-803df46a19c185724fdb31d9"
+    ],
+    "total_amount_usd": 99.92,
+    "activity_dates": [
+      "2016-12-01",
+      "2016-12-01"
+    ]
+  },
+  "stop_reason": "Customer denial settled authorization legitimacy.",
+  "tool_calls": 4,
+  "tokens": 0,
+  "latency_s": 1.455
+}

@@ -1,0 +1,82 @@
+USE GRAPH HHGOA_FRAUD
+
+/*
+  shared_origin_components
+  ────────────────────────
+  Finds connected components of Card vertices whose transactions share a
+  DeviceProfile, BillingRegion, or EmailDomain (the "shared-origin" projection).
+
+  Algorithm: iterative label-propagation (BFS-style).
+    Each Card starts with its own vertex ID as component label.
+    Rounds propagate the minimum label through shared-origin edges until stable.
+
+  Returns: component_summary — list of {component_id, card_count, card_ids[]}
+           Only components with 2+ cards are returned (single-card is noise).
+  Parameters:
+    max_rounds  — safety cap on label-propagation iterations (default 10)
+    min_size    — minimum component size to include in output (default 2)
+*/
+CREATE OR REPLACE QUERY shared_origin_components(INT max_rounds = 10, INT min_size = 2)
+  FOR GRAPH HHGOA_FRAUD
+  SYNTAX V2
+{
+  TYPEDEF TUPLE<STRING component_id, INT card_count, STRING card_ids> ComponentRow;
+
+  /* ── per-vertex accumulators ─────────────────────────────────────── */
+  OrAccum  @changed = TRUE;
+  MinAccum<STRING> @label;          /* component label = minimum card_id seen */
+
+  /* ── global output accumulator ───────────────────────────────────── */
+  MapAccum<STRING, SetAccum<STRING>> @@components; /* label -> set of card_ids */
+
+  HeapAccum<ComponentRow>(1000, card_count DESC) @@result;
+
+  /* ── initialise every Card with its own ID ───────────────────────── */
+  AllCards = {Card.*};
+  AllCards = SELECT c FROM AllCards:c
+             POST-ACCUM c.@label = c.card_id,
+                        c.@changed = TRUE;
+
+  /* ── label-propagation rounds ────────────────────────────────────── */
+  INT round = 0;
+  WHILE round < max_rounds DO
+    /* Forward: Card → Txn → SharedEntity → Txn → Card */
+    Changed = SELECT c2
+      FROM AllCards:c1
+           -(MADE)-> Transaction:t1
+           -(FROM_DEVICE|BILLED_IN|PURCHASER_EMAIL)-> :shared
+           -(<FROM_DEVICE|<BILLED_IN|<PURCHASER_EMAIL)-> Transaction:t2
+           -(<MADE)-> Card:c2
+      WHERE c1.@label < c2.@label     /* only push if our label is smaller */
+      ACCUM c2.@label += c1.@label,
+            c2.@changed = (c2.@label != c1.@label)
+      HAVING c2.@changed == TRUE;
+
+    IF Changed.size() == 0 THEN
+      BREAK;
+    END;
+    round = round + 1;
+  END;
+
+  /* ── collect components ──────────────────────────────────────────── */
+  AllCards = SELECT c FROM AllCards:c
+             POST-ACCUM @@components += (c.@label -> c.card_id);
+
+  FOREACH (label, cards) IN @@components DO
+    INT sz = cards.size();
+    IF sz >= min_size THEN
+      /* Serialise card_ids as pipe-delimited string for JSON output */
+      STRING ids = "";
+      FOREACH cid IN cards DO
+        IF ids != "" THEN ids = ids + "|"; END;
+        ids = ids + cid;
+      END;
+      @@result += ComponentRow(label, sz, ids);
+    END;
+  END;
+
+  PRINT @@result AS component_summary,
+        round    AS rounds_run;
+}
+
+INSTALL QUERY shared_origin_components

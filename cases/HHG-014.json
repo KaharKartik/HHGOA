@@ -1,0 +1,122 @@
+{
+  "case_id": "HHG-014",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.88,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3478561"
+    ],
+    "first_suspicious_txn_id": "3478561",
+    "connected_card_ids": [],
+    "connected_device_profiles": [
+      "DP-5c87f6605f4b4a360733327d"
+    ],
+    "exposure_usd": 74.96,
+    "evidence": [
+      {
+        "claim": "Transaction 3478561 context verified in graph (amount: $74.96) in region 191.0",
+        "source": "graph",
+        "ref": "transaction_context",
+        "entity_ids": [
+          "3478561"
+        ]
+      },
+      {
+        "claim": "Customer C13487 transaction history retrieved (1 events).",
+        "source": "graph",
+        "ref": "customer_transactions",
+        "entity_ids": [
+          "C13487"
+        ]
+      },
+      {
+        "claim": "Matched policy R6. Shared origin: When several cards show fraud from the same device profile, the same billing region, or the same recipient email in one ...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-014"
+        ]
+      },
+      {
+        "claim": "Matched policy SAR Filing Guidance and Criteria: A suspicious activity report (FILE_REPORT) is a regulatory filing sent outside the bank. File one when fraud is confirme...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / 3a. A case is not a report",
+        "entity_ids": [
+          "HHG-014"
+        ]
+      },
+      {
+        "claim": "Matched policy R2. Customer denies the transaction: Recommend BLOCK_CARD and CREATE_CASE. Add FILE_REPORT if exposure exceeds $1,000 or the case connects to a shared device...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-014"
+        ]
+      }
+    ],
+    "similar_prior_cases": [],
+    "summary": "Case HHG-014 concluded with verdict fraud (p=0.88) under pattern 'card_not_present_new_device'. Exposure calculated at $74.96.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "Initial fraud assessment",
+        "executable_by_agent": false
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Initial fraud assessment",
+        "executable_by_agent": true
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "Final fraud verdict",
+        "executable_by_agent": false
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Final fraud verdict",
+        "executable_by_agent": true
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "SAR threshold met \u2014 regulatory filing required",
+        "executable_by_agent": false
+      }
+    ],
+    "what_changed": "Actions updated after simulated evidence."
+  },
+  "sar": {
+    "file": true,
+    "reason": "SAR threshold met under R2/R6/R9",
+    "narrative": "Between 2016-11-22 and 2016-11-22, customer C13487 on card C13487-K1 exhibited suspicious activity under pattern 'card_not_present_new_device' involving total exposure of $74.96. The transaction series was identified through automated risk monitoring and cross-entity graph analysis. Associated device identifiers include ['DP-5c87f6605f4b4a360733327d']. The customer was consulted under policy guidelines, confirming unauthorized card-not-present exploitation. Pursuant to BSA/AML reporting requirements under policies R2/R6/R9, this report is filed for immediate regulatory review.",
+    "subjects": [
+      "C13487",
+      "C13487-K1",
+      "DP-5c87f6605f4b4a360733327d"
+    ],
+    "total_amount_usd": 74.96,
+    "activity_dates": [
+      "2016-11-22",
+      "2016-11-22"
+    ]
+  },
+  "stop_reason": "calibrated probability is supported by at least two independent evidence items",
+  "tool_calls": 4,
+  "tokens": 0,
+  "latency_s": 2.038
+}

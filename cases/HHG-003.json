@@ -1,0 +1,128 @@
+{
+  "case_id": "HHG-003",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.9,
+    "pattern": "card_not_present_fraud",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3530164"
+    ],
+    "first_suspicious_txn_id": "3530164",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 49.0,
+    "evidence": [
+      {
+        "claim": "Transaction 3530164 context verified in graph (amount: $49.00) in region 330.0",
+        "source": "graph",
+        "ref": "transaction_context",
+        "entity_ids": [
+          "3530164"
+        ]
+      },
+      {
+        "claim": "Customer C08623 transaction history retrieved (1 events).",
+        "source": "graph",
+        "ref": "customer_transactions",
+        "entity_ids": [
+          "C08623"
+        ]
+      },
+      {
+        "claim": "Historical closed cases retrieved for card C08623-K2: ['CC-1589', 'CC-2817', 'CC-2935', 'CC-3327', 'CC-3682', 'CC-4957'].",
+        "source": "graph",
+        "ref": "prior_case_neighbors",
+        "entity_ids": [
+          "C08623-K2",
+          "CC-1589",
+          "CC-2817",
+          "CC-2935",
+          "CC-3327",
+          "CC-3682",
+          "CC-4957"
+        ]
+      },
+      {
+        "claim": "Matched policy R10. Never BLOCK_ALL_CARDS unless qualified: Never BLOCK_ALL_CARDS unless at least two of the customer's cards show confirmed fraud or the customer's credentials are...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-003"
+        ]
+      },
+      {
+        "claim": "Matched policy R5. Card testing: Three or more small online authorizations on one card within an hour, followed by a larger purchase: recommend DECLINE_T...",
+        "source": "document",
+        "ref": "data/raw/README.md#Fraud Policy / Rules",
+        "entity_ids": [
+          "HHG-003"
+        ]
+      },
+      {
+        "claim": "Matched policy Pattern 1: Card testing: A stolen card number is checked before use: three or more tiny online authorizations, often under $5, then a larger purc...",
+        "source": "document",
+        "ref": "data/raw/README.md#Known Fraud Patterns",
+        "entity_ids": [
+          "HHG-003"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-1589",
+      "CC-2817",
+      "CC-2935",
+      "CC-3327",
+      "CC-3682",
+      "CC-4957"
+    ],
+    "summary": "Case HHG-003 concluded with verdict fraud (p=0.90) under pattern 'card_not_present_fraud'. Exposure calculated at $49.00.",
+    "written_to_graph": false,
+    "graph_case_id": ""
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": false
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": true
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": false
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2: customer denies the transaction",
+        "executable_by_agent": true
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "No report trigger under R2/R6/R9",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "calibrated probability is supported by at least two independent evidence items",
+  "tool_calls": 4,
+  "tokens": 0,
+  "latency_s": 2.582
+}

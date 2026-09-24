@@ -1,0 +1,111 @@
+USE GRAPH HHGOA_FRAUD
+
+/*
+  relationship_paths
+  ──────────────────
+  Bounded BFS between a source Card and a target Card (or any Card if target
+  is omitted).  Traverses MADE, NEXT, FROM_DEVICE, BILLED_IN, and
+  PURCHASER_EMAIL edges up to max_hops deep.
+
+  Used by the investigation agent to surface evidence chains connecting a
+  suspect card to a known-fraud card or closed case card.
+
+  Returns: paths — list of {source_card, target_card, hop_count, via_entity, via_type}
+  Parameters:
+    source_card — starting Card vertex ID (required)
+    target_card — destination Card vertex ID, or "" for nearest reachable cards
+    max_hops    — BFS depth cap (default 4)
+    top_k       — maximum paths to return (default 50)
+*/
+CREATE OR REPLACE QUERY relationship_paths(
+  STRING source_card,
+  STRING target_card = "",
+  INT    max_hops    = 4,
+  INT    top_k       = 50
+)
+  FOR GRAPH HHGOA_FRAUD
+  SYNTAX V2
+{
+  TYPEDEF TUPLE<STRING src, STRING tgt, INT hops, STRING via_entity, STRING via_type> PathRow;
+
+  HeapAccum<PathRow>(top_k, hops ASC) @@paths;
+
+  /* Accum visited to avoid cycles */
+  SetAccum<VERTEX> @@visited;
+
+  /* Per-card: distance from source */
+  MinAccum<INT>  @dist = 999;
+  MinAccum<STRING> @via_entity;
+  MinAccum<STRING> @via_type;
+
+  /* ── seed: start vertex ────────────────────────────────────────────── */
+  Source = {Card(source_card)};
+  Source = SELECT s FROM Source:s
+           POST-ACCUM s.@dist = 0,
+                      @@visited += s;
+
+  Frontier = Source;
+
+  INT hop = 0;
+  WHILE Frontier.size() > 0 AND hop < max_hops DO
+    hop = hop + 1;
+
+    /* Expand through Transaction → DeviceProfile/BillingRegion/EmailDomain → Card */
+    NextCards = SELECT c2
+      FROM Frontier:c1
+           -(MADE)-> Transaction:t
+           -(FROM_DEVICE)-> DeviceProfile:dev
+           -(<FROM_DEVICE)-> Transaction:t2
+           -(<MADE)-> Card:c2
+      WHERE c2 NOT IN @@visited
+      ACCUM c2.@dist += hop,
+            c2.@via_entity += dev.device_profile_id,
+            c2.@via_type   += "DeviceProfile",
+            @@visited       += c2;
+
+    NextCards2 = SELECT c2
+      FROM Frontier:c1
+           -(MADE)-> Transaction:t
+           -(BILLED_IN)-> BillingRegion:reg
+           -(<BILLED_IN)-> Transaction:t2
+           -(<MADE)-> Card:c2
+      WHERE c2 NOT IN @@visited
+      ACCUM c2.@dist += hop,
+            c2.@via_entity += reg.billing_region,
+            c2.@via_type   += "BillingRegion",
+            @@visited       += c2;
+
+    NextCards3 = SELECT c2
+      FROM Frontier:c1
+           -(MADE)-> Transaction:t
+           -(PURCHASER_EMAIL)-> EmailDomain:em
+           -(<PURCHASER_EMAIL)-> Transaction:t2
+           -(<MADE)-> Card:c2
+      WHERE c2 NOT IN @@visited
+      ACCUM c2.@dist += hop,
+            c2.@via_entity += em.email_domain,
+            c2.@via_type   += "EmailDomain",
+            @@visited       += c2;
+
+    Frontier = NextCards UNION NextCards2 UNION NextCards3;
+
+    /* Emit paths for this frontier layer */
+    SELECT c FROM Frontier:c
+    POST-ACCUM
+      IF target_card == "" OR c.card_id == target_card THEN
+        @@paths += PathRow(source_card, c.card_id, c.@dist, c.@via_entity, c.@via_type)
+      END;
+
+    IF target_card != "" THEN
+      /* Stop early if we've reached the target */
+      TargetReached = SELECT c FROM Frontier:c WHERE c.card_id == target_card;
+      IF TargetReached.size() > 0 THEN
+        BREAK;
+      END;
+    END;
+  END;
+
+  PRINT @@paths AS paths;
+}
+
+INSTALL QUERY relationship_paths
