@@ -15,6 +15,14 @@ An enterprise-grade fraud detection and investigation intelligence platform powe
 
 ---
 
+## 📍 Benchmark Case Pack & Submission Mapping
+
+- **`data/raw/case_pack.csv`** = benchmark input/reference containing the 20 cases
+- **`cases/`** = official submission answers
+- **`cases/HHG-001.json` through `cases/HHG-020.json`** = one answer per benchmark case
+
+---
+
 ## 📐 Architecture Overview
 
 ```
@@ -160,7 +168,9 @@ python -m pytest tests/
 
 ```text
 hhgoa-fraud-investigation/
-├── cases/                     # Official 20-case submission package (HHG-001.json - HHG-020.json)
+├── cases/                     # Official 20-case submission package (HHG-001.json - HHG-020.json & README.md)
+│   ├── README.md              # Submission answer mapping documentation
+│   └── HHG-001.json - HHG-020.json # Official submission answers (one answer per benchmark case)
 ├── backend/                   # FastAPI backend server application
 │   └── app/
 │       ├── api.py             # REST API endpoints (/cases, /transactions, /search)
